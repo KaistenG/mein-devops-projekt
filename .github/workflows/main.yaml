@@ -46,3 +46,4 @@ jobs:
           
           # Führt das Kubernetes-Deployment aus
           kubectl apply -f k8s-deployment.yaml
+# GEmini ist der letzte schrott
