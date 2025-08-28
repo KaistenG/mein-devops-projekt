@@ -1,0 +1,43 @@
+# Der Name deiner Workflow-Pipeline, der auf GitHub angezeigt wird
+name: CI/CD Pipeline
+
+# Definiert die Ereignisse, die den Workflow auslösen
+on:
+  push:
+    branches:
+      - main  # Startet den Workflow bei jedem Push auf den 'main' Branch
+
+# Definiert die Jobs (Schritte) des Workflows
+jobs:
+  build_and_deploy:
+    # Der Runner-Umgebung, in der der Job ausgeführt wird (eine virtuelle Maschine)
+    runs-on: ubuntu-latest
+
+    # Definiert die Schritte innerhalb des Jobs
+    steps:
+      # Step 1: Code aus dem Repository auschecken
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      # Step 2: Docker-Image bauen und pushen
+      - name: Build and Push Docker Image
+        uses: docker/build-push-action@v5
+        with:
+          # Der Kontext für den Build-Befehl (das aktuelle Verzeichnis)
+          context: .
+          # Pusht das Image in die Registry, nachdem es gebaut wurde
+          push: true
+          # Tags für das Image (z.B. 'kaisteng/devops-test-app:1')
+          tags: kaisteng/devops-test-app:${{ github.run_number }}
+          # Docker Hub-Benutzername
+          username: ${{ secrets.DOCKER_USERNAME }}
+          # Docker Hub-Passwort (verwendet ein GitHub-Secret)
+          password: ${{ secrets.DOCKER_PASSWORD }}
+
+      # Step 3: Deployment in Kubernetes
+      - name: Deploy to Kubernetes
+        uses: ahmadf/kubectl-action@v1.0.0
+        env:
+          KUBE_CONFIG_DATA: ${{ secrets.KUBE_CONFIG }}
+        with:
+          args: apply -f k8s-deployment.yaml
